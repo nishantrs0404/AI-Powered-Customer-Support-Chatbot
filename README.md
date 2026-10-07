@@ -25,3 +25,21 @@ Frontend:
 - Component-based UI
 
 Backend integration will be implemented in later development phases.
+
+### Day 2 — Chat UI Main Layout & Responsive Design
+
+Completed:
+
+- Improved chatbot header design
+- Added chatbot avatar
+- Added online status indicator
+- Added message timestamps
+- Improved user and bot message bubbles
+- Added empty chat state
+- Improved loading/typing indicator
+- Improved message input area
+- Added disabled state for empty input
+- Added input focus styling
+- Added responsive desktop/mobile layouts
+- Tested chat interactions
+- Tested responsive behavior

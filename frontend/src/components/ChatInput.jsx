@@ -15,24 +15,35 @@ function ChatInput({ onSend }) {
     };
 
     const handleKeyDown = (event) => {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
             handleSend();
         }
     };
 
     return (
-        <div className="chat-input">
-            <input
-                type="text"
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your message..."
-            />
+        <div className="chat-input-area">
+            <div className="chat-input">
+                <input
+                    type="text"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type your message..."
+                    maxLength={2000}
+                />
 
-            <button onClick={handleSend}>
-                Send
-            </button>
+                <button
+                    onClick={handleSend}
+                    disabled={!message.trim()}
+                >
+                    Send
+                </button>
+            </div>
+
+            <p className="input-hint">
+                Press Enter to send
+            </p>
         </div>
     );
 }
