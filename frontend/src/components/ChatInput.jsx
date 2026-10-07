@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const MAX_MESSAGE_LENGTH = 2000;
+
 function ChatInput({ onSend, disabled = false }) {
     const [message, setMessage] = useState("");
 
@@ -34,7 +36,7 @@ function ChatInput({ onSend, disabled = false }) {
                             ? "Waiting for response..."
                             : "Type your message..."
                     }
-                    maxLength={2000}
+                    maxLength={MAX_MESSAGE_LENGTH}
                     disabled={disabled}
                 />
 
@@ -46,9 +48,15 @@ function ChatInput({ onSend, disabled = false }) {
                 </button>
             </div>
 
-            <p className="input-hint">
-                Press Enter to send
-            </p>
+            <div className="input-footer">
+                <p className="input-hint">
+                    Press Enter to send
+                </p>
+
+                <span className="character-count">
+                    {message.length}/{MAX_MESSAGE_LENGTH}
+                </span>
+            </div>
         </div>
     );
 }

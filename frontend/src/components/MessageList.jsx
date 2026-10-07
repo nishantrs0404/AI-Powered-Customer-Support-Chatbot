@@ -26,9 +26,10 @@ function MessageList({ messages }) {
             ) : (
                 messages.map((message, index) => (
                     <MessageBubble
-                        key={index}
+                        key={message.id || index}
                         sender={message.sender}
                         message={message.message}
+                        timestamp={message.timestamp}
                     />
                 ))
             )}

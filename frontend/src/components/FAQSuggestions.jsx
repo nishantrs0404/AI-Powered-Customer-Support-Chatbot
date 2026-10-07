@@ -1,23 +1,37 @@
 function FAQSuggestions({ onSelect }) {
     const suggestions = [
-        "Where is my order?",
-        "How can I get a refund?",
-        "How do I return a product?",
-        "What payment methods do you accept?"
+        {
+            label: "📦 Order status",
+            question: "Where is my order?"
+        },
+        {
+            label: "💰 Refund",
+            question: "How can I get a refund?"
+        },
+        {
+            label: "↩️ Return",
+            question: "How do I return a product?"
+        },
+        {
+            label: "💳 Payment",
+            question: "What payment methods do you accept?"
+        }
     ];
 
     return (
         <div className="faq-section">
-            <p className="faq-title">Frequently asked questions</p>
+            <p className="faq-title">
+                Frequently asked questions
+            </p>
 
             <div className="faq-suggestions">
                 {suggestions.map((suggestion) => (
                     <button
-                        key={suggestion}
+                        key={suggestion.question}
                         className="faq-button"
-                        onClick={() => onSelect(suggestion)}
+                        onClick={() => onSelect(suggestion.question)}
                     >
-                        {suggestion}
+                        {suggestion.label}
                     </button>
                 ))}
             </div>

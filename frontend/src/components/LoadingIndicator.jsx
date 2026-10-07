@@ -7,6 +7,10 @@ function LoadingIndicator() {
                     <span></span>
                     <span></span>
                 </div>
+
+                <span className="typing-label">
+                    AI is thinking...
+                </span>
             </div>
         </div>
     );

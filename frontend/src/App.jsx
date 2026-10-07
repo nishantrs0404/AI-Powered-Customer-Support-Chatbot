@@ -11,18 +11,67 @@ import "./styles/global.css";
 
 const initialMessages = [
   {
+    id: 1,
     sender: "bot",
-    message: "Hello! How can I help you today?"
+    message: "Hello! How can I help you today?",
+    timestamp: new Date()
   },
   {
+    id: 2,
     sender: "user",
-    message: "Where is my order?"
+    message: "Where is my order?",
+    timestamp: new Date()
   },
   {
+    id: 3,
     sender: "bot",
-    message: "Sure! Please provide your order ID."
+    message: "Sure! Please provide your order ID.",
+    timestamp: new Date()
   }
 ];
+
+function generateMockResponse(message) {
+  const text = message.toLowerCase();
+
+  if (
+    text.includes("order") ||
+    text.includes("track") ||
+    text.includes("shipping")
+  ) {
+    return "I can help you check your order status. Please provide your order ID.";
+  }
+
+  if (
+    text.includes("refund") ||
+    text.includes("money back")
+  ) {
+    return "I can help with your refund request. Please provide your order ID so we can check the refund status.";
+  }
+
+  if (
+    text.includes("return") ||
+    text.includes("exchange")
+  ) {
+    return "Sure! I can help you with a return or exchange. Please provide your order ID.";
+  }
+
+  if (
+    text.includes("payment") ||
+    text.includes("pay")
+  ) {
+    return "We support multiple payment methods. Please let me know if you are having a problem with a specific payment.";
+  }
+
+  if (
+    text.includes("hello") ||
+    text.includes("hi") ||
+    text.includes("hey")
+  ) {
+    return "Hello! I'm happy to help. What can I assist you with today?";
+  }
+
+  return "Thanks for contacting us. Could you provide a little more information so I can help you better?";
+}
 
 function App() {
   const [messages, setMessages] = useState(initialMessages);
@@ -32,11 +81,17 @@ function App() {
   const [error, setError] = useState(null);
 
   const handleSendMessage = (message) => {
+    if (isLoading) {
+      return;
+    }
+
     setError(null);
 
     const userMessage = {
+      id: Date.now(),
       sender: "user",
-      message: message
+      message: message,
+      timestamp: new Date()
     };
 
     setMessages((previousMessages) => [
@@ -48,9 +103,10 @@ function App() {
 
     setTimeout(() => {
       const botMessage = {
+        id: Date.now() + 1,
         sender: "bot",
-        message:
-          "Thanks for your message! Our support system is processing your request."
+        message: generateMockResponse(message),
+        timestamp: new Date()
       };
 
       setMessages((previousMessages) => [

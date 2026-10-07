@@ -1,8 +1,10 @@
-function MessageBubble({ sender, message }) {
-    const time = new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
+function MessageBubble({ sender, message, timestamp }) {
+    const formattedTime = timestamp
+        ? new Date(timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+        })
+        : "";
 
     return (
         <div className={`message ${sender}`}>
@@ -11,9 +13,11 @@ function MessageBubble({ sender, message }) {
                     {message}
                 </div>
 
-                <span className="message-time">
-                    {time}
-                </span>
+                {formattedTime && (
+                    <span className="message-time">
+                        {formattedTime}
+                    </span>
+                )}
             </div>
         </div>
     );
