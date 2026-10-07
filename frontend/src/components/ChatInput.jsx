@@ -1,12 +1,12 @@
 import { useState } from "react";
 
-function ChatInput({ onSend }) {
+function ChatInput({ onSend, disabled = false }) {
     const [message, setMessage] = useState("");
 
     const handleSend = () => {
         const trimmedMessage = message.trim();
 
-        if (!trimmedMessage) {
+        if (!trimmedMessage || disabled) {
             return;
         }
 
@@ -29,13 +29,18 @@ function ChatInput({ onSend }) {
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Type your message..."
+                    placeholder={
+                        disabled
+                            ? "Waiting for response..."
+                            : "Type your message..."
+                    }
                     maxLength={2000}
+                    disabled={disabled}
                 />
 
                 <button
                     onClick={handleSend}
-                    disabled={!message.trim()}
+                    disabled={!message.trim() || disabled}
                 >
                     Send
                 </button>

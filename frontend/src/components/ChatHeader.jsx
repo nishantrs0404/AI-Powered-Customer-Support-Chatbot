@@ -1,4 +1,4 @@
-function ChatHeader() {
+function ChatHeader({ onClearChat }) {
     return (
         <header className="chat-header">
             <div className="header-left">
@@ -12,9 +12,19 @@ function ChatHeader() {
                 </div>
             </div>
 
-            <div className="online-status">
-                <span className="online-dot"></span>
-                <span>Online</span>
+            <div className="header-actions">
+                <div className="online-status">
+                    <span className="online-dot"></span>
+                    <span>Online</span>
+                </div>
+
+                <button
+                    className="clear-button"
+                    onClick={onClearChat}
+                    title="Clear conversation"
+                >
+                    Clear
+                </button>
             </div>
         </header>
     );

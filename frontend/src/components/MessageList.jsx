@@ -1,6 +1,15 @@
+import { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 
 function MessageList({ messages }) {
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth"
+        });
+    }, [messages]);
+
     return (
         <div className="message-list">
             {messages.length === 0 ? (
@@ -10,8 +19,8 @@ function MessageList({ messages }) {
                     <h2>Start a conversation</h2>
 
                     <p>
-                        Ask us anything about your order, payment, shipping,
-                        returns, or products.
+                        Ask us anything about your order, payment,
+                        shipping, returns, or products.
                     </p>
                 </div>
             ) : (
@@ -23,6 +32,8 @@ function MessageList({ messages }) {
                     />
                 ))
             )}
+
+            <div ref={messagesEndRef}></div>
         </div>
     );
 }

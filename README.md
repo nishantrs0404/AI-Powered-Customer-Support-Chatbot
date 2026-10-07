@@ -43,3 +43,22 @@ Completed:
 - Added responsive desktop/mobile layouts
 - Tested chat interactions
 - Tested responsive behavior
+
+### Day 3 — Chat History, Suggestions & UI States
+
+Completed:
+
+- Added FAQ suggestion buttons
+- Added clickable FAQ suggestions
+- Added clear conversation functionality
+- Added automatic scrolling to latest message
+- Added empty conversation state
+- Added error message component
+- Added retry UI
+- Improved loading state
+- Disabled chat input while waiting for response
+- Added waiting-for-response placeholder
+- Tested conversation interactions
+- Tested FAQ suggestions
+- Tested clear chat functionality
+- Tested responsive behavior
