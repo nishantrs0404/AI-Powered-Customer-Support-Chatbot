@@ -155,3 +155,37 @@ Completed:
 - Prepare the SQLite database integration.
 - Commit and push the verified Day 7 changes.
 
+
+### Day 8 — Pydantic Validation and API Schemas
+
+**Status:** In Progress
+
+**Objectives**
+- Introduce Pydantic schemas for API request and response validation.
+- Implement the `POST /api/v1/validate-message` endpoint.
+- Enforce message length and whitespace validation.
+- Add automated tests for valid messages and invalid requests.
+
+**Technologies**
+- Python
+- FastAPI
+- Pydantic
+- Pytest
+- HTTPX
+
+**Implementation**
+- Added `backend/app/schemas/message.py`.
+- Defined `MessageRequest` and `MessageValidationResponse`.
+- Preserved the existing `/health` endpoint.
+- Added the message-validation endpoint and test cases.
+
+**Verification**
+- Automated tests: Pending
+- API documentation verification: Pending
+- Git commit and push: Pending
+
+**Next Steps**
+- Complete the SQLite database integration.
+- Design the conversation and message data models.
+- Add database persistence tests.
+
