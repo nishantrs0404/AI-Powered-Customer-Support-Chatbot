@@ -156,7 +156,7 @@ Completed:
 - Commit and push the verified Day 7 changes.
 
 
-### Day 8 — Pydantic Validation and API Schemas
+### Part 8 — Pydantic Validation and API Schemas
 
 **Status:** In Progress
 
@@ -188,4 +188,38 @@ Completed:
 - Complete the SQLite database integration.
 - Design the conversation and message data models.
 - Add database persistence tests.
+
+### Part 9 — SQLite Database Integration
+
+**Status:** In Progress
+
+**Objectives**
+- Configure SQLite using SQLAlchemy.
+- Create database models for conversations and messages.
+- Establish a one-to-many relationship between conversations and messages.
+- Verify database persistence using automated tests.
+
+**Implementation**
+- Added `backend/app/database.py` for engine configuration and session management.
+- Added `backend/app/models.py` for conversation and message models.
+- Configured automatic table creation during application startup.
+- Added `backend/tests/test_database.py` to verify database persistence.
+
+**Technologies**
+- Python
+- SQLite
+- SQLAlchemy
+- FastAPI
+- Pytest
+
+**Verification**
+- Backend test suite: Pending
+- Database table creation: Pending
+- Conversation and message persistence: Pending
+- Git commit and push: Pending
+
+**Next Steps**
+- Design and implement the FAQ data model.
+- Prepare the customer-support knowledge base.
+- Integrate FAQ retrieval into the chatbot pipeline.
 

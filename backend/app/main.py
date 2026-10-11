@@ -1,15 +1,27 @@
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app import models
+from app.database import Base, engine
 from app.schemas.message import (
     MessageRequest,
     MessageValidationResponse,
 )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database tables when the application starts."""
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
 app = FastAPI(
     title="AI-Powered Customer Support Chatbot",
     description="Backend API for the customer support chatbot.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 
