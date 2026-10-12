@@ -223,3 +223,61 @@ Completed:
 - Prepare the customer-support knowledge base.
 - Integrate FAQ retrieval into the chatbot pipeline.
 
+## Part 10 — Conversation Management API
+
+**Status:** Completed
+
+### Features Implemented
+
+- **Conversation Creation:** Implemented `POST /api/v1/conversations` to create a new conversation and generate a unique session ID.
+- **Message Validation:** Validates customer messages and rejects empty messages or messages exceeding 2,000 characters.
+- **Message Persistence:** Implemented `POST /api/v1/conversations/{session_id}/messages` to save customer messages in SQLite.
+- **Conversation History:** Implemented `GET /api/v1/conversations/{session_id}/messages` to retrieve messages in chronological order.
+- **Error Handling:** Returns HTTP `404 Not Found` when a conversation session does not exist and HTTP `422 Unprocessable Entity` for invalid message requests.
+- **API Documentation:** Exposes endpoints through FastAPI's interactive Swagger UI.
+
+### Technologies Used
+
+- Python
+- FastAPI
+- SQLAlchemy
+- SQLite
+- Pydantic
+- pytest
+
+### Testing
+
+- Added automated tests for conversation creation, message persistence, validation, error handling, and conversation-history retrieval.
+- **Automated test results:** 13 passed.
+- `git diff --cached --check` completed without reporting whitespace errors.
+- Private code-quality checker passed with an AI-risk score of 0 under its configured threshold.
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/health` | Check backend health |
+| POST | `/api/v1/validate-message` | Validate a customer message |
+| POST | `/api/v1/conversations` | Create a conversation |
+| POST | `/api/v1/conversations/{session_id}/messages` | Save a customer message |
+| GET | `/api/v1/conversations/{session_id}/messages` | Retrieve conversation history |
+
+### Verification
+
+Run automated tests from the `backend` directory:
+
+```powershell
+..\.venv\Scripts\python.exe -m pytest -v
+```
+
+Start the backend server:
+
+```powershell
+..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+```
+
+Open the interactive API documentation at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
+### Outcome
+
+The backend supports creating conversations, persisting customer messages, and retrieving conversation history. AI-generated customer support responses and frontend-backend integration remain future development tasks.
