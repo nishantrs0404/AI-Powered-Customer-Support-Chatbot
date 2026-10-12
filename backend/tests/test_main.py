@@ -1,6 +1,4 @@
-
 from fastapi.testclient import TestClient
-
 from app.main import app
 
 client = TestClient(app)
@@ -54,3 +52,23 @@ def test_missing_message_is_rejected():
     )
 
     assert response.status_code == 422
+
+
+def test_create_conversation_returns_unique_session_id(client):
+    first_response = client.post("/api/v1/conversations")
+    second_response = client.post("/api/v1/conversations")
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 201
+
+    first_conversation = first_response.json()
+    second_conversation = second_response.json()
+
+    assert first_conversation["id"] > 0
+    assert first_conversation["session_id"]
+    assert first_conversation["created_at"]
+
+    assert (
+        first_conversation["session_id"]
+        != second_conversation["session_id"]
+    )
