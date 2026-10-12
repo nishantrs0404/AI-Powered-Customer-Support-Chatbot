@@ -1,0 +1,277 @@
+[
+    {
+        "id": "FAQ001",
+        "category": "orders",
+        "question": "How can I track my order?",
+        "answer": "Use the tracking link in your order confirmation to check the delivery status.",
+        "keywords": [
+            "track order",
+            "order status",
+            "delivery tracking"
+        ]
+    },
+    {
+        "id": "FAQ002",
+        "category": "orders",
+        "question": "How can I cancel my order?",
+        "answer": "Contact customer support as soon as possible to check whether your order can still be cancelled.",
+        "keywords": [
+            "cancel order",
+            "order cancellation",
+            "stop order"
+        ]
+    },
+    {
+        "id": "FAQ003",
+        "category": "orders",
+        "question": "Can I change my order after placing it?",
+        "answer": "Order changes depend on the processing status. Contact customer support before the order ships.",
+        "keywords": [
+            "change order",
+            "edit order",
+            "modify order"
+        ]
+    },
+    {
+        "id": "FAQ004",
+        "category": "orders",
+        "question": "Why has my order not been shipped?",
+        "answer": "Your order may still be processing. Check your order status or contact customer support for an update.",
+        "keywords": [
+            "order not shipped",
+            "processing delay",
+            "shipping status"
+        ]
+    },
+    {
+        "id": "FAQ005",
+        "category": "shipping",
+        "question": "How long does delivery take?",
+        "answer": "Delivery time depends on the shipping method and destination. Check your order confirmation for the estimated delivery date.",
+        "keywords": [
+            "delivery time",
+            "shipping duration",
+            "arrival date"
+        ]
+    },
+    {
+        "id": "FAQ006",
+        "category": "shipping",
+        "question": "What should I do if my order is delayed?",
+        "answer": "Check the latest tracking information and contact customer support if the revised delivery estimate has passed.",
+        "keywords": [
+            "delayed order",
+            "late delivery",
+            "shipment delay"
+        ]
+    },
+    {
+        "id": "FAQ007",
+        "category": "shipping",
+        "question": "Can I change my delivery address?",
+        "answer": "Address changes depend on whether the order has shipped. Contact customer support as soon as possible.",
+        "keywords": [
+            "change address",
+            "delivery address",
+            "wrong address"
+        ]
+    },
+    {
+        "id": "FAQ008",
+        "category": "shipping",
+        "question": "What should I do if my package is marked delivered but I did not receive it?",
+        "answer": "Check your delivery location and ask household members or building staff. If the package is still missing, contact customer support.",
+        "keywords": [
+            "missing package",
+            "marked delivered",
+            "package not received"
+        ]
+    },
+    {
+        "id": "FAQ009",
+        "category": "payments",
+        "question": "Which payment methods are accepted?",
+        "answer": "Available payment methods depend on the store configuration. Check the payment options shown during checkout.",
+        "keywords": [
+            "payment methods",
+            "accepted payments",
+            "pay options"
+        ]
+    },
+    {
+        "id": "FAQ010",
+        "category": "payments",
+        "question": "What should I do if my payment fails?",
+        "answer": "Verify your payment details and available balance, then try again or use another available payment method.",
+        "keywords": [
+            "payment failed",
+            "transaction declined",
+            "payment error"
+        ]
+    },
+    {
+        "id": "FAQ011",
+        "category": "payments",
+        "question": "I was charged twice for one order. What should I do?",
+        "answer": "Check your bank statement to confirm both transactions and contact customer support with your order details.",
+        "keywords": [
+            "double charge",
+            "duplicate payment",
+            "charged twice"
+        ]
+    },
+    {
+        "id": "FAQ012",
+        "category": "payments",
+        "question": "How can I get an invoice for my order?",
+        "answer": "Check your order confirmation or account order history for an available invoice. Contact customer support if you cannot find it.",
+        "keywords": [
+            "invoice",
+            "order receipt",
+            "payment receipt"
+        ]
+    },
+    {
+        "id": "FAQ013",
+        "category": "refunds",
+        "question": "How do I request a refund?",
+        "answer": "Contact customer support or use the available return process to submit a refund request for your order.",
+        "keywords": [
+            "request refund",
+            "money back",
+            "refund process"
+        ]
+    },
+    {
+        "id": "FAQ014",
+        "category": "refunds",
+        "question": "How long does a refund take?",
+        "answer": "Refund processing time depends on the store policy and payment provider. Check your refund confirmation for details.",
+        "keywords": [
+            "refund time",
+            "refund pending",
+            "money returned"
+        ]
+    },
+    {
+        "id": "FAQ015",
+        "category": "refunds",
+        "question": "Why has my refund not arrived?",
+        "answer": "Check whether the refund has been approved and processed. If the expected processing period has passed, contact customer support.",
+        "keywords": [
+            "refund not received",
+            "refund delay",
+            "pending refund"
+        ]
+    },
+    {
+        "id": "FAQ016",
+        "category": "returns",
+        "question": "How can I return a product?",
+        "answer": "Check the store's return policy and follow its return request process to determine eligibility and next steps.",
+        "keywords": [
+            "return product",
+            "product return",
+            "send item back"
+        ]
+    },
+    {
+        "id": "FAQ017",
+        "category": "returns",
+        "question": "Can I exchange a product for another size?",
+        "answer": "Exchange availability depends on the store's policy and stock. Contact customer support to check your options.",
+        "keywords": [
+            "exchange size",
+            "change size",
+            "product exchange"
+        ]
+    },
+    {
+        "id": "FAQ018",
+        "category": "returns",
+        "question": "What should I do if I receive a damaged product?",
+        "answer": "Keep the packaging and take photos of the damage. Contact customer support with your order details and supporting photos.",
+        "keywords": [
+            "damaged product",
+            "broken item",
+            "defective product"
+        ]
+    },
+    {
+        "id": "FAQ019",
+        "category": "returns",
+        "question": "Can I return a product without its original packaging?",
+        "answer": "Return requirements vary by store policy and product type. Contact customer support to confirm whether the return is possible.",
+        "keywords": [
+            "return without packaging",
+            "missing packaging",
+            "original box"
+        ]
+    },
+    {
+        "id": "FAQ020",
+        "category": "account",
+        "question": "How do I reset my password?",
+        "answer": "Use the Forgot Password option on the login page and follow the instructions sent to your registered email address.",
+        "keywords": [
+            "reset password",
+            "forgot password",
+            "login password"
+        ]
+    },
+    {
+        "id": "FAQ021",
+        "category": "account",
+        "question": "I cannot log in to my account. What should I do?",
+        "answer": "Check your email and password, verify your internet connection, and use the password recovery option if necessary.",
+        "keywords": [
+            "cannot login",
+            "login problem",
+            "account access"
+        ]
+    },
+    {
+        "id": "FAQ022",
+        "category": "account",
+        "question": "How can I update my email address?",
+        "answer": "Open your account settings and look for the email update option. You may need to verify the new email address.",
+        "keywords": [
+            "change email",
+            "update email",
+            "new email address"
+        ]
+    },
+    {
+        "id": "FAQ023",
+        "category": "account",
+        "question": "How can I delete my account?",
+        "answer": "Check your account settings for a deletion option or contact customer support to learn about the account deletion process.",
+        "keywords": [
+            "delete account",
+            "close account",
+            "remove account"
+        ]
+    },
+    {
+        "id": "FAQ024",
+        "category": "technical_support",
+        "question": "The website is not loading. What should I do?",
+        "answer": "Check your internet connection, refresh the page, and try another browser or clear your browser cache.",
+        "keywords": [
+            "website not loading",
+            "site error",
+            "page not opening"
+        ]
+    },
+    {
+        "id": "FAQ025",
+        "category": "technical_support",
+        "question": "How can I contact customer support?",
+        "answer": "Use the contact information or support options listed on the store's official website.",
+        "keywords": [
+            "contact support",
+            "customer service",
+            "help desk"
+        ]
+    }
+]

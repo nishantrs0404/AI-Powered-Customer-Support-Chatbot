@@ -281,3 +281,26 @@ Open the interactive API documentation at [http://127.0.0.1:8000/docs](http://12
 ### Outcome
 
 The backend supports creating conversations, persisting customer messages, and retrieving conversation history. AI-generated customer support responses and frontend-backend integration remain future development tasks.
+
+
+## Part 11 — Customer Support FAQ Knowledge Base
+
+### Features
+- Created a structured JSON dataset containing 25 customer-support FAQs.
+- Organized questions into categories such as orders, shipping,
+  payments, refunds, returns, accounts, and technical support.
+- Added a Python FAQ loader with dataset validation.
+- Added automated tests for required fields, unique IDs,
+  valid keywords, and non-empty questions and answers.
+
+### Files Added
+- `data/faq.json`
+- `backend/app/services/faq_service.py`
+- `backend/tests/test_faq_data.py`
+
+### Testing
+Run the backend test suite from the `backend` directory:
+
+```powershell
+..\.venv\Scripts\python.exe -m pytest -v
+```
