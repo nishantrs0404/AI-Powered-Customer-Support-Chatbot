@@ -304,3 +304,26 @@ Run the backend test suite from the `backend` directory:
 ```powershell
 ..\.venv\Scripts\python.exe -m pytest -v
 ```
+
+
+## Part 12 — FAQ Search and Matching Engine
+
+### Features
+- Implemented FAQ text normalization and tokenization.
+- Added keyword-based relevance scoring.
+- Ranked FAQ results by relevance.
+- Added configurable result limits and minimum score thresholds.
+- Returns an empty list when no sufficiently relevant FAQ is found.
+- Added automated tests for search accuracy, ordering, input validation,
+  and unrelated queries.
+
+### Files Added
+- `backend/app/services/faq_search.py`
+- `backend/tests/test_faq_search.py`
+
+### Testing
+Run the complete test suite from the `backend` directory:
+
+```powershell
+..\.venv\Scripts\python.exe -m pytest -v
+```
