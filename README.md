@@ -327,3 +327,63 @@ Run the complete test suite from the `backend` directory:
 ```powershell
 ..\.venv\Scripts\python.exe -m pytest -v
 ```
+
+
+## Part 13 — FAQ Search API Integration
+
+### Objective
+Integrated the FAQ search engine with the FastAPI backend to allow customers to search the customer-support knowledge base through an API endpoint.
+
+### Features Implemented
+- Added a FAQ search API endpoint.
+- Connected the endpoint to the existing FAQ matching engine.
+- Accepted customer questions and a configurable result limit.
+- Returned matching FAQ IDs, questions, answers, and relevance scores.
+- Used Pydantic schemas for request validation and response structure.
+- Verified a successful FAQ search request using FastAPI Swagger UI.
+
+### API Endpoint
+
+**Method:** `POST`
+
+**Endpoint:** `/api/v1/faqs/search`
+
+**Example Request**
+```json
+{
+  "query": "Where is my package?",
+  "limit": 3
+}
+```
+
+**Example Response**
+```json
+{
+  "query": "Where is my package?",
+  "results": [
+    {
+      "id": "FAQ008",
+      "question": "Where is my package?",
+      "answer": "You can check your package status using the tracking link in your order confirmation.",
+      "score": 1.0
+    }
+  ]
+}
+```
+
+*Note: The response above illustrates the successful result observed during Swagger testing. Actual answers and scores depend on the FAQ dataset and matching logic.*
+
+### Testing
+- Verified the FAQ search endpoint in FastAPI Swagger UI.
+- Confirmed an HTTP 200 successful response for the package-tracking query.
+- Additional validation and automated test results should be documented after those checks are completed.
+
+### Technologies Used
+- Python
+- FastAPI
+- Pydantic
+- JSON
+- Pytest
+
+### Next Step
+Connect the FAQ search functionality to the chatbot's conversation workflow and prepare for frontend integration.

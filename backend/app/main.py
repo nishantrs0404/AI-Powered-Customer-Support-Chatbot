@@ -1,4 +1,11 @@
+import re
 
+from app.faq_data import FAQS
+from app.schemas.faq import (
+    FAQResult,
+    FAQSearchRequest,
+    FAQSearchResponse,
+)
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
@@ -144,3 +151,67 @@ def get_conversation_messages(
     ).all()
 
     return list(messages)
+
+
+
+@app.post(
+    "/api/v1/faqs/search",
+    response_model=FAQSearchResponse,
+    tags=["FAQs"],
+)
+def search_faqs(
+    request: FAQSearchRequest,
+) -> FAQSearchResponse:
+    """Search sample FAQs using keyword overlap."""
+
+    stop_words = {
+        "a", "an", "the", "is", "are", "am",
+        "i", "my", "me", "to", "for", "of",
+        "and", "in", "on", "do", "does", "how",
+        "can", "what", "where", "please",
+    }
+
+    def tokenize(text: str) -> set[str]:
+        words = set(re.findall(r"\b[a-z0-9]+\b", text.lower()))
+        return words - stop_words
+
+    query_words = tokenize(request.query)
+
+    if not query_words:
+        return FAQSearchResponse(
+            query=request.query,
+            results=[],
+        )
+
+    matches = []
+
+    for faq in FAQS:
+        question_words = tokenize(faq["question"])
+        answer_words = tokenize(faq["answer"])
+
+        searchable_words = question_words | answer_words
+        overlap = query_words & searchable_words
+
+        if not overlap:
+            continue
+
+        score = len(overlap) / len(query_words)
+
+        matches.append(
+            FAQResult(
+                id=faq["id"],
+                question=faq["question"],
+                answer=faq["answer"],
+                score=round(score, 4),
+            )
+        )
+
+    matches.sort(
+        key=lambda item: item.score,
+        reverse=True,
+    )
+
+    return FAQSearchResponse(
+        query=request.query,
+        results=matches[:request.limit],
+    )
