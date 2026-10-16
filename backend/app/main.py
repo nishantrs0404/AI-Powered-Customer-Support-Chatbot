@@ -1,27 +1,41 @@
+import asyncio
 import re
-
-from app.faq_data import FAQS
-from app.schemas.faq import (
-    FAQResult,
-    FAQSearchRequest,
-    FAQSearchResponse,
-)
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import models
 from app.database import Base, engine, get_db
+from app.faq_data import FAQS
 from app.schemas.conversation import ConversationResponse
+from app.schemas.faq import (
+    FAQResult,
+    FAQSearchRequest,
+    FAQSearchResponse,
+)
 from app.schemas.message import (
     MessageRequest,
     MessageResponse,
     MessageValidationResponse,
 )
+from app.services.gemini import generate_reply
 
+
+# Gemini request and response schemas
+
+class AIReplyRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+
+
+class AIReplyResponse(BaseModel):
+    reply: str
+
+
+# Application startup
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +52,9 @@ app = FastAPI(
 )
 
 
+
+# Health endpoint
+
 @app.get("/health", tags=["Health"])
 def health_check():
     """Check whether the backend service is running."""
@@ -46,6 +63,8 @@ def health_check():
         "service": "customer-support-chatbot",
     }
 
+
+# Message validation
 
 @app.post(
     "/api/v1/validate-message",
@@ -61,6 +80,8 @@ def validate_message(
         character_count=len(request.message),
     )
 
+
+# Conversation management
 
 @app.post(
     "/api/v1/conversations",
@@ -81,6 +102,9 @@ def create_conversation(
     db.refresh(conversation)
 
     return conversation
+
+
+# Save a customer message
 
 
 @app.post(
@@ -120,6 +144,10 @@ def create_message(
     return message
 
 
+
+# Retrieve conversation history
+
+
 @app.get(
     "/api/v1/conversations/{session_id}/messages",
     response_model=list[MessageResponse],
@@ -154,6 +182,44 @@ def get_conversation_messages(
 
 
 
+# Gemini AI reply
+
+
+@app.post(
+    "/ai/reply",
+    response_model=AIReplyResponse,
+    tags=["AI"],
+)
+async def create_ai_reply(
+    request: AIReplyRequest,
+) -> AIReplyResponse:
+    """Generate a customer-support response using Gemini."""
+    try:
+        reply = await asyncio.to_thread(
+            generate_reply,
+            request.message,
+        )
+
+        return AIReplyResponse(reply=reply)
+
+    except RuntimeError as exc:
+        error_message = str(exc)
+
+        if "not configured" in error_message.lower():
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Gemini API key is not configured.",
+            ) from exc
+
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Gemini could not generate a response. Please try again.",
+        ) from exc
+
+
+# FAQ search
+
+
 @app.post(
     "/api/v1/faqs/search",
     response_model=FAQSearchResponse,
@@ -172,7 +238,9 @@ def search_faqs(
     }
 
     def tokenize(text: str) -> set[str]:
-        words = set(re.findall(r"\b[a-z0-9]+\b", text.lower()))
+        words = set(
+            re.findall(r"\b[a-z0-9]+\b", text.lower())
+        )
         return words - stop_words
 
     query_words = tokenize(request.query)

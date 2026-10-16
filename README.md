@@ -387,3 +387,23 @@ Integrated the FAQ search engine with the FastAPI backend to allow customers to 
 
 ### Next Step
 Connect the FAQ search functionality to the chatbot's conversation workflow and prepare for frontend integration.
+
+### Day 14 — Gemini API Integration
+
+**Implemented**
+- Integrated the Google Gemini API through a dedicated service module.
+- Added the `POST /ai/reply` endpoint to generate customer-support responses.
+- Added error handling for unavailable Gemini services and missing API configuration.
+- Added automated tests for successful responses, API failures, and invalid messages.
+- Kept API credentials in environment configuration rather than source code.
+
+**Testing**
+- Total automated tests: 32
+- Passed: 32
+- Failed: 0
+
+**Security**
+- `.env` is excluded from Git.
+- API keys are not committed to the repository.
+
+**Next:** Integrate generated AI replies with conversation persistence and the frontend chat workflow.
