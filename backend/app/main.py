@@ -22,7 +22,8 @@ from app.schemas.message import (
     MessageResponse,
     MessageValidationResponse,
 )
-from app.services.gemini import generate_reply
+from app.services.gemini import generate_context_aware_reply, generate_reply
+from app.services.prompts import HISTORY_LIMIT, SYSTEM_PROMPT
 
 
 # Gemini request and response schemas
@@ -215,6 +216,100 @@ async def create_ai_reply(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Gemini could not generate a response. Please try again.",
         ) from exc
+
+
+# Context-aware AI reply with conversation history
+
+
+@app.post(
+    "/api/v1/conversations/{session_id}/reply",
+    response_model=MessageResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["AI"],
+)
+async def create_context_aware_reply(
+    session_id: str,
+    request: MessageRequest,
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    """
+    Save a customer message, generate a context-aware Gemini reply using
+    recent conversation history, persist the assistant response, and return it.
+    """
+    # Verify the conversation exists and belongs to this session.
+    conversation = db.scalar(
+        select(models.Conversation).where(
+            models.Conversation.session_id == session_id
+        )
+    )
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found",
+        )
+
+    # Persist the incoming user message first.
+    user_message = models.Message(
+        conversation_id=conversation.id,
+        role="user",
+        content=request.message,
+    )
+    db.add(user_message)
+    db.commit()
+    db.refresh(user_message)
+
+    # Retrieve the N most recent messages *excluding* the one just saved so
+    # it is not duplicated when we pass history to Gemini.
+    recent_rows = db.scalars(
+        select(models.Message)
+        .where(
+            models.Message.conversation_id == conversation.id,
+            models.Message.id != user_message.id,
+        )
+        .order_by(models.Message.id.desc())
+        .limit(HISTORY_LIMIT)
+    ).all()
+
+    # Restore chronological order (oldest first).
+    history = [
+        {"role": row.role, "content": row.content}
+        for row in reversed(recent_rows)
+    ]
+
+    # Call Gemini with the system prompt, history, and current message.
+    try:
+        assistant_text = await asyncio.to_thread(
+            generate_context_aware_reply,
+            request.message,
+            history,
+            SYSTEM_PROMPT,
+        )
+    except RuntimeError as exc:
+        error_message = str(exc)
+
+        if "not configured" in error_message.lower() or "missing" in error_message.lower():
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Gemini API key is not configured.",
+            ) from exc
+
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Gemini could not generate a response. Please try again.",
+        ) from exc
+
+    # Persist the assistant response.
+    assistant_message = models.Message(
+        conversation_id=conversation.id,
+        role="assistant",
+        content=assistant_text,
+    )
+    db.add(assistant_message)
+    db.commit()
+    db.refresh(assistant_message)
+
+    return assistant_message
 
 
 # FAQ search
