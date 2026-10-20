@@ -19,3 +19,9 @@ Rules:
 # Includes both user and assistant messages.  Raise this value for longer
 # context at the cost of higher token usage per request.
 HISTORY_LIMIT = 10
+
+# Minimum relevance score required before a FAQ answer is returned directly.
+# Scores are produced by faq_search.calculate_score() and range from 0.0 to 1.0.
+# Matches the faq_search module's default min_score; raise this value to require
+# a tighter match before bypassing Gemini.
+FAQ_RELEVANCE_THRESHOLD = 0.35

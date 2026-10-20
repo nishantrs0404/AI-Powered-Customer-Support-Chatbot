@@ -16,6 +16,10 @@ REPLY_URL = "/api/v1/conversations/{session_id}/reply"
 # The endpoint imports generate_context_aware_reply directly into app.main,
 # so we must patch the name there (not on the gemini module object).
 _PATCH_TARGET = "app.main.generate_context_aware_reply"
+# The endpoint also imports search_faqs into app.main as faq_service_search;
+# patch it there when a test specifically exercises Gemini behaviour and needs
+# to suppress any incidental FAQ match.
+_FAQ_PATCH_TARGET = "app.main.faq_service_search"
 
 
 
@@ -103,7 +107,11 @@ def test_previous_messages_passed_in_chronological_order(client, monkeypatch):
 
 
 def test_current_message_not_duplicated_in_history(client, monkeypatch):
-    """The message sent to the /reply endpoint must not appear in history."""
+    """The message sent to the /reply endpoint must not appear in history.
+
+    search_faqs is patched to return no results so that the Gemini path is
+    taken regardless of whether the test message matches a FAQ entry.
+    """
     captured = {}
 
     def fake_generate(message, history, system_prompt):
@@ -112,6 +120,8 @@ def test_current_message_not_duplicated_in_history(client, monkeypatch):
         return "OK."
 
     monkeypatch.setattr(_PATCH_TARGET, fake_generate)
+    # Force the Gemini path so we can inspect the history argument.
+    monkeypatch.setattr(_FAQ_PATCH_TARGET, lambda *a, **kw: [])
 
     session_id, _ = _create_conversation(client)
     current = "What is my order status?"
@@ -221,6 +231,8 @@ def test_reply_returns_502_on_gemini_failure(client, monkeypatch):
         raise RuntimeError("Gemini is temporarily unavailable.")
 
     monkeypatch.setattr(_PATCH_TARGET, fake_generate)
+    # Suppress any FAQ match so the Gemini path (and its error) is reached.
+    monkeypatch.setattr(_FAQ_PATCH_TARGET, lambda *a, **kw: [])
 
     session_id, _ = _create_conversation(client)
     response = _reply(client, session_id, "Help!")
@@ -234,6 +246,8 @@ def test_reply_returns_500_on_missing_api_key(client, monkeypatch):
         raise RuntimeError("GEMINI_API_KEY is missing from the .env file.")
 
     monkeypatch.setattr(_PATCH_TARGET, fake_generate)
+    # Suppress any FAQ match so the Gemini path (and its error) is reached.
+    monkeypatch.setattr(_FAQ_PATCH_TARGET, lambda *a, **kw: [])
 
     session_id, _ = _create_conversation(client)
     response = _reply(client, session_id, "Help!")
@@ -295,6 +309,8 @@ def test_reply_messages_ordered_correctly_in_db(client, monkeypatch):
         return reply
 
     monkeypatch.setattr(_PATCH_TARGET, fake_generate)
+    # Suppress any FAQ match so the Gemini ordering logic is exercised.
+    monkeypatch.setattr(_FAQ_PATCH_TARGET, lambda *a, **kw: [])
 
     session_id, _ = _create_conversation(client)
     _reply(client, session_id, "Question one")
