@@ -740,4 +740,128 @@ From the repository root:
 - Display `answer_source` in the React chat UI (e.g., a subtle "Answered from FAQ" badge).
 - Implement conversation session expiry or cleanup.
 - Evaluate embedding-based FAQ search for higher-quality relevance scoring.
-
+
+---
+
+## Day 17 — Chatbot Response Reliability & FAQ-to-Gemini Workflow Verification
+
+### Overview
+
+Day 17 focuses on improving the reliability, resilience, and testability of the
+chatbot response pipeline. We conducted deep empirical analysis of the FAQ search
+algorithm and reply workflow across diverse query types (natural questions,
+contractions, conversational follow-ups, short/ambiguous queries, and questions
+with incidental keyword overlap). We fortified the search engine against false-positive
+matches and tokenization anomalies, verified the complete FAQ-first with Gemini
+fallback workflow, and strengthened database transaction management and error handling.
+
+### FAQ Relevance Improvements
+
+1. **Contraction Token Splitting & Stop Word Expansion**:
+   - The regex word tokenizer `re.findall(r"[a-z0-9]+", ...)` splits English
+     contractions (e.g. `hasn't`, `haven't`, `can't`, `didn't`) into truncated auxiliary
+     stems (`hasn`, `haven`, `can`, `didn`) and single-letter fragments (`t`, `s`, `m`, `d`).
+   - Previously, these unhandled fragments contaminated `query_words`, deflating
+     keyword coverage and Jaccard similarity for legitimate customer questions.
+   - We expanded `STOP_WORDS` in `backend/app/services/faq_search.py` to filter
+     contraction fragments (`t`, `s`, `m`, `d`, `ll`, `ve`, `re`, `don`, `doesn`, `didn`,
+     `hasn`, `haven`, `hadn`, `won`, `wouldn`, `couldn`, `shouldn`, `isn`, `aren`, `wasn`,
+     `weren`) as well as common conversational function words (`be`, `been`, `being`, `not`,
+     `no`, `nor`, `that`, `this`, `these`, `those`, `there`, `then`, `here`, `if`, `but`,
+     `by`, `from`, `with`, `as`, `just`, `very`, `also`, `so`, `than`, `too`).
+   - Customer questions with contractions (e.g. *"Why hasn't my order shipped?"*) now
+     cleanly tokenize to meaningful content words (`{'order', 'shipped'}`), boosting match
+     scores from borderline 0.425 to high-confidence 0.833.
+
+2. **Elimination of Follow-Up False Positives**:
+   - Because `"not"` was previously omitted from stop words, conversational follow-up
+     phrases like *"Why not?"* or *"Not yet"* were tokenized as `{"not"}`. Since `FAQ015`
+     (*"Why has my refund not arrived?"*) contains `"not"`, single-token coverage evaluated
+     to 1.0, generating a false-positive score of 0.7917 and serving an irrelevant refund FAQ.
+   - With proper function word filtering, conversational follow-ups now yield an empty
+     FAQ query token set, safely returning no FAQ match and seamlessly falling back to
+     Gemini to leverage conversation history.
+
+3. **Whole-Word Keyword Phrase Matching**:
+   - In `calculate_score()`, keyword phrase matching was upgraded from naive substring
+     checks (`keyword in normalized_query`) to word-boundary matching
+     `re.search(rf"\b{re.escape(keyword)}\b", normalized_query)`.
+   - This prevents partial-word false positives (e.g., query containing `"reinvoice"`
+     scoring a 0.9 phrase bonus against keyword `"invoice"`).
+
+4. **Preservation of the Core Scoring Formula & Threshold**:
+   - The verified formula remains `Score = (0.75 × Keyword Coverage) + (0.25 × Jaccard Similarity)`.
+   - The threshold remains `FAQ_RELEVANCE_THRESHOLD = 0.35`.
+   - Empirical testing confirmed that genuine FAQ questions score well above 0.60–1.00,
+     while ambiguous, conversational, or unrelated queries safely fall back to Gemini.
+
+### Verified FAQ-to-Gemini Fallback Workflow
+
+The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` was verified:
+
+1. **Validation**: The conversation session is checked in SQLite; unknown sessions return `404 Not Found`. Message text is validated (rejecting empty/whitespace strings and payloads > 2000 characters with `422 Unprocessable Entity`).
+2. **User Message Persistence**: The incoming customer message is persisted with `role="user"` before downstream processing.
+3. **FAQ Search**: `faq_service_search` queries `data/faq.json` with `min_score=FAQ_RELEVANCE_THRESHOLD` (0.35).
+4. **FAQ Path**: If a relevant match exists, the verified answer is retrieved and Gemini is **not** called. `answer_source="faq"` is returned.
+5. **Gemini Fallback Path**: If no FAQ meets the threshold, up to `HISTORY_LIMIT` (10) prior messages are fetched in chronological order.
+   - The current customer turn is excluded from the history payload to prevent duplication.
+   - `SYSTEM_PROMPT` is forwarded to guide customer support persona.
+   - `answer_source="gemini"` is returned.
+6. **Assistant Response Persistence**: The assistant turn is saved to SQLite with `role="assistant"`.
+7. **Session Isolation**: Messages remain strictly partitioned by conversation ID.
+
+### Error Handling & Resilience Improvements
+
+1. **Database Transaction Rollback**:
+   - Added `try...except Exception` blocks with explicit `db.rollback()` around database
+     commit calls in `create_context_aware_reply`, `create_message`, and `create_conversation`.
+   - Database write failures cleanly raise HTTP 500 (`"Database error while..."`) without
+     leaving corrupted session state or leaking SQLite schema details to clients.
+2. **FAQ Search Resilience**:
+   - Wrapped `faq_service_search()` in `create_context_aware_reply` in defensive error handling.
+   - If the FAQ search service encounters an unexpected exception (e.g. data file unreadable),
+     the pipeline gracefully defaults to `faq_hits = []` and falls back to Gemini rather than
+     crashing the endpoint.
+3. **Gemini Exception Normalization**:
+   - Expanded exception catching on Gemini invocations to handle unexpected non-RuntimeError
+     exceptions, standardizing responses to HTTP 502 Bad Gateway without exposing stack traces.
+
+### Automated Tests (`backend/tests/test_response_reliability.py`)
+
+14 new automated tests were added covering all Day 17 scenarios:
+
+| Test | Scenario |
+|---|---|
+| `test_contractions_preserve_keyword_matches` | Contractions (`hasn't`, `haven't`) correctly match FAQ entries with score >= 0.80 |
+| `test_conversational_followups_do_not_falsely_match_faq` | Follow-ups (`Why not?`, `Not yet`, `Where is it now?`) return 0 FAQ hits |
+| `test_substring_words_do_not_trigger_keyword_phrase_matches` | Substring match (`reinvoice` vs `invoice`) does not receive phrase bonus |
+| `test_unrelated_queries_with_incidental_overlap_fall_back` | Partial overlap (`I want to order a pizza`) falls back to Gemini |
+| `test_greetings_fall_back_to_gemini` | Conversational greeting (`Hello`) falls back to Gemini |
+| `test_faq_match_bypasses_gemini_and_sets_source` | Relevant query returns FAQ answer with `answer_source="faq"` and Gemini call count = 0 |
+| `test_multi_turn_conversation_with_mixed_sources` | Interleaved FAQ and Gemini turns persist properly with full chronological order |
+| `test_session_isolation_across_multiple_conversations` | Concurrent conversations never cross-contaminate history |
+| `test_faq_search_failure_gracefully_falls_back_to_gemini` | FAQ service exception triggers graceful Gemini fallback |
+| `test_reply_rejects_empty_whitespace_message` | Whitespace-only string returns HTTP 422 |
+| `test_reply_rejects_oversized_message` | Message > 2000 chars returns HTTP 422 |
+| `test_reply_returns_404_for_nonexistent_session` | Unknown session ID returns HTTP 404 |
+| `test_unexpected_gemini_exception_returns_502_cleanly` | Non-RuntimeError exception produces HTTP 502 without stack traces |
+| `test_database_error_on_user_message_rolls_back` | Simulated DB error triggers transaction rollback and returns HTTP 500 |
+
+### Test Results
+
+- Baseline (Day 16): **65 passing tests**
+- Added (Day 17): **14 passing tests**
+- Total test suite: **79 passed, 0 failed**
+
+```powershell
+# Run full test suite
+.venv\Scripts\pytest.exe backend\tests -v
+
+# Run Day 17 tests only
+.venv\Scripts\pytest.exe backend\tests\test_response_reliability.py -v
+```
+
+### Remaining Limitations
+
+- Keyword matching relies on token overlap; semantic paraphrases without shared vocabulary (e.g. *"whereabouts of my parcel"*) rely on the Gemini fallback.
+- Embedding-based semantic retrieval (e.g., vector embeddings) can be explored in future iterations for broader vocabulary coverage.

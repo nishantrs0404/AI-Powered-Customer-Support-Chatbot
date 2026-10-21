@@ -96,15 +96,22 @@ def create_conversation(
     db: Session = Depends(get_db),
 ) -> ConversationResponse:
     """Create and persist a new conversation."""
-    conversation = models.Conversation(
-        session_id=uuid4().hex,
-    )
+    try:
+        conversation = models.Conversation(
+            session_id=uuid4().hex,
+        )
 
-    db.add(conversation)
-    db.commit()
-    db.refresh(conversation)
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
 
-    return conversation
+        return conversation
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while creating conversation.",
+        ) from exc
 
 
 # Save a customer message
@@ -134,17 +141,24 @@ def create_message(
             detail="Conversation not found",
         )
 
-    message = models.Message(
-        conversation_id=conversation.id,
-        role="user",
-        content=request.message,
-    )
+    try:
+        message = models.Message(
+            conversation_id=conversation.id,
+            role="user",
+            content=request.message,
+        )
 
-    db.add(message)
-    db.commit()
-    db.refresh(message)
+        db.add(message)
+        db.commit()
+        db.refresh(message)
 
-    return message
+        return message
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while saving message.",
+        ) from exc
 
 
 
@@ -258,14 +272,21 @@ async def create_context_aware_reply(
 
     # Persist the incoming user message first to guarantee it is stored
     # even if the downstream FAQ / Gemini call fails.
-    user_message = models.Message(
-        conversation_id=conversation.id,
-        role="user",
-        content=request.message,
-    )
-    db.add(user_message)
-    db.commit()
-    db.refresh(user_message)
+    try:
+        user_message = models.Message(
+            conversation_id=conversation.id,
+            role="user",
+            content=request.message,
+        )
+        db.add(user_message)
+        db.commit()
+        db.refresh(user_message)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while processing message.",
+        ) from exc
 
     # ------------------------------------------------------------------
     # FAQ-first routing
@@ -273,11 +294,15 @@ async def create_context_aware_reply(
     # search_faqs() returns results sorted by descending score and already
     # filtered by min_score (defaults to FAQ_RELEVANCE_THRESHOLD).
     # ------------------------------------------------------------------
-    faq_hits = faq_service_search(
-        request.message,
-        limit=1,
-        min_score=FAQ_RELEVANCE_THRESHOLD,
-    )
+    try:
+        faq_hits = faq_service_search(
+            request.message,
+            limit=1,
+            min_score=FAQ_RELEVANCE_THRESHOLD,
+        )
+    except Exception:
+        # If FAQ search encounters an unexpected issue, safely fall back to Gemini
+        faq_hits = []
 
     if faq_hits:
         # A reliable FAQ answer exists — return it without calling Gemini.
@@ -313,7 +338,9 @@ async def create_context_aware_reply(
                 history,
                 SYSTEM_PROMPT,
             )
-        except RuntimeError as exc:
+        except Exception as exc:
+            if isinstance(exc, HTTPException):
+                raise
             error_message = str(exc)
 
             if "not configured" in error_message.lower() or "missing" in error_message.lower():
@@ -330,14 +357,21 @@ async def create_context_aware_reply(
         answer_source = "gemini"
 
     # Persist the assistant response.
-    assistant_message = models.Message(
-        conversation_id=conversation.id,
-        role="assistant",
-        content=faq_answer,
-    )
-    db.add(assistant_message)
-    db.commit()
-    db.refresh(assistant_message)
+    try:
+        assistant_message = models.Message(
+            conversation_id=conversation.id,
+            role="assistant",
+            content=faq_answer,
+        )
+        db.add(assistant_message)
+        db.commit()
+        db.refresh(assistant_message)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while saving response.",
+        ) from exc
 
     # Build and return the extended reply response.
     return ReplyResponse(

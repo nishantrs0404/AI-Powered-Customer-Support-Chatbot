@@ -11,6 +11,18 @@ STOP_WORDS = {
     "i", "me", "my", "we", "our", "you", "your", "it",
     "to", "for", "of", "in", "on", "at", "and", "or",
     "please", "tell", "about", "get", "have", "has", "had",
+    # Function words & conversational particles
+    "be", "been", "being",
+    "not", "no", "nor",
+    "that", "this", "these", "those",
+    "there", "then", "here",
+    "if", "but", "by", "from", "with", "as",
+    "just", "very", "also", "so", "than", "too",
+    # Contraction fragments produced by regex word splitting
+    "t", "s", "m", "d", "ll", "ve", "re",
+    "don", "doesn", "didn", "hasn", "haven", "hadn",
+    "won", "wouldn", "couldn", "shouldn",
+    "isn", "aren", "wasn", "weren",
 }
 
 
@@ -42,9 +54,9 @@ def calculate_score(query: str, faq: dict[str, Any]) -> float:
     if normalized_query == question or normalized_query in keywords:
         return 1.0
 
-    # Reward a complete keyword phrase appearing in the query.
+    # Reward a complete keyword phrase appearing as whole words in the query.
     if any(
-        keyword and keyword in normalized_query
+        keyword and bool(re.search(rf"\b{re.escape(keyword)}\b", normalized_query))
         for keyword in keywords
     ):
         return 0.9
