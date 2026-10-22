@@ -23,6 +23,13 @@ from app.schemas.message import (
     MessageValidationResponse,
     ReplyResponse,
 )
+from app.nlp import analyze_message, classify_intent, extract_entities
+from app.schemas.nlp import (
+    EntityResponse,
+    IntentResponse,
+    MessageAnalysisResponse,
+    NLPRequest,
+)
 from app.services.faq_search import search_faqs as faq_service_search
 from app.services.gemini import generate_context_aware_reply, generate_reply
 from app.services.prompts import FAQ_RELEVANCE_THRESHOLD, HISTORY_LIMIT, SYSTEM_PROMPT
@@ -373,6 +380,12 @@ async def create_context_aware_reply(
             detail="Database error while saving response.",
         ) from exc
 
+    # ------------------------------------------------------------------
+    # NLP Intent Classification & Entity Extraction
+    # ------------------------------------------------------------------
+    intent_result = classify_intent(request.message)
+    extracted_entities = extract_entities(request.message)
+
     # Build and return the extended reply response.
     return ReplyResponse(
         id=assistant_message.id,
@@ -381,6 +394,8 @@ async def create_context_aware_reply(
         content=assistant_message.content,
         created_at=assistant_message.created_at,
         answer_source=answer_source,
+        intent=intent_result.intent,
+        entities=extracted_entities.to_dict(),
     )
 
 
@@ -449,4 +464,61 @@ def search_faqs(
     return FAQSearchResponse(
         query=request.query,
         results=matches[:request.limit],
+    )
+
+
+# ----------------------------------------------------------------------
+# NLP Endpoints (FR-04 Intent Recognition & FR-05 Entity Extraction)
+# ----------------------------------------------------------------------
+
+
+@app.post(
+    "/api/v1/nlp/intent",
+    response_model=IntentResponse,
+    tags=["NLP"],
+)
+def get_intent(request: NLPRequest) -> IntentResponse:
+    """Classify the customer message intent across 13 supported categories."""
+    result = classify_intent(request.message)
+    return IntentResponse(
+        intent=result.intent,
+        confidence=result.confidence,
+        matched_keywords=result.matched_keywords,
+        matched_patterns=result.matched_patterns,
+    )
+
+
+@app.post(
+    "/api/v1/nlp/entities",
+    response_model=EntityResponse,
+    tags=["NLP"],
+)
+def get_entities(request: NLPRequest) -> EntityResponse:
+    """Extract domain entities (Order IDs, tracking numbers, emails, etc.)."""
+    entities = extract_entities(request.message)
+    return EntityResponse(
+        order_ids=entities.order_ids,
+        emails=entities.emails,
+        tracking_numbers=entities.tracking_numbers,
+        amounts=entities.amounts,
+        products=entities.products,
+    )
+
+
+@app.post(
+    "/api/v1/nlp/analyze",
+    response_model=MessageAnalysisResponse,
+    tags=["NLP"],
+)
+def analyze(request: NLPRequest) -> MessageAnalysisResponse:
+    """Perform complete NLP analysis: preprocessing, intent detection, and entity extraction."""
+    analysis = analyze_message(request.message)
+    return MessageAnalysisResponse(
+        text=analysis["text"],
+        normalized=analysis["normalized"],
+        tokens=analysis["tokens"],
+        intent=analysis["intent"],
+        confidence=analysis["confidence"],
+        entities=EntityResponse(**analysis["entities"]),
+        is_confident=analysis["is_confident"],
     )

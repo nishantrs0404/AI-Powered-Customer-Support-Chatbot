@@ -865,3 +865,8 @@ The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` w
 
 - Keyword matching relies on token overlap; semantic paraphrases without shared vocabulary (e.g. *"whereabouts of my parcel"*) rely on the Gemini fallback.
 - Embedding-based semantic retrieval (e.g., vector embeddings) can be explored in future iterations for broader vocabulary coverage.
+
+### Day 18
+- Implemented: NLP preprocessing (contraction expansion, text normalization, tokenization), rule-based intent recognition supporting all 13 customer-support intents (FR-04) with confidence scoring, domain entity extraction (order IDs, tracking numbers, emails, amounts, products), dedicated NLP endpoints (`/api/v1/nlp/intent`, `/api/v1/nlp/entities`, `/api/v1/nlp/analyze`), and metadata integration in conversation reply responses.
+- Tests: 114 passed, 0 failed (79 baseline + 35 new tests across `test_nlp.py` and `test_intent.py`).
+- Verification: Verified intent classification, entity extraction, and conversation reply metadata integration via automated tests and FastAPI TestClient.
