@@ -870,3 +870,9 @@ The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` w
 - Implemented: NLP preprocessing (contraction expansion, text normalization, tokenization), rule-based intent recognition supporting all 13 customer-support intents (FR-04) with confidence scoring, domain entity extraction (order IDs, tracking numbers, emails, amounts, products), dedicated NLP endpoints (`/api/v1/nlp/intent`, `/api/v1/nlp/entities`, `/api/v1/nlp/analyze`), and metadata integration in conversation reply responses.
 - Tests: 114 passed, 0 failed (79 baseline + 35 new tests across `test_nlp.py` and `test_intent.py`).
 - Verification: Verified intent classification, entity extraction, and conversation reply metadata integration via automated tests and FastAPI TestClient.
+
+### Day 19–20
+- Implemented: business-data retrieval (`lookup_order`, `lookup_shipment`, `lookup_product`, policy lookups from sample business data), intent-aware context preparation (`build_context`, `format_context_for_prompt`), and grounded reply pipeline integration injecting structured business facts into Gemini prompts while preserving FAQ-first routing, conversation history, and error resilience.
+- Tests: 176 passed, 0 failed (114 baseline + 62 new tests in `test_retrieval.py`).
+- Verification: Verified order/shipment/product/policy lookups, missing/unknown ID handling, intent-aware routing, grounded prompt assembly, and reply pipeline integration via automated tests and FastAPI TestClient.
+

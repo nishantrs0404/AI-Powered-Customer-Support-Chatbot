@@ -1,0 +1,190 @@
+{
+  "orders": [
+    {
+      "order_id": "ORD-10001",
+      "customer_email": "alice@example.com",
+      "status": "delivered",
+      "placed_at": "2026-10-10T09:15:00Z",
+      "updated_at": "2026-10-14T16:30:00Z",
+      "total": "$129.99",
+      "items": [
+        {"product_id": "PROD-501", "name": "Wireless Headphones", "quantity": 1, "price": "$79.99"},
+        {"product_id": "PROD-502", "name": "USB-C Charging Cable", "quantity": 2, "price": "$25.00"}
+      ]
+    },
+    {
+      "order_id": "ORD-10002",
+      "customer_email": "bob@example.com",
+      "status": "shipped",
+      "placed_at": "2026-10-18T14:00:00Z",
+      "updated_at": "2026-10-20T10:45:00Z",
+      "total": "$349.00",
+      "items": [
+        {"product_id": "PROD-503", "name": "Laptop Stand", "quantity": 1, "price": "$49.00"},
+        {"product_id": "PROD-504", "name": "Mechanical Keyboard", "quantity": 1, "price": "$300.00"}
+      ]
+    },
+    {
+      "order_id": "ORD-10003",
+      "customer_email": "carol@example.com",
+      "status": "processing",
+      "placed_at": "2026-10-22T11:30:00Z",
+      "updated_at": "2026-10-22T11:30:00Z",
+      "total": "$59.99",
+      "items": [
+        {"product_id": "PROD-505", "name": "Bluetooth Speaker", "quantity": 1, "price": "$59.99"}
+      ]
+    },
+    {
+      "order_id": "ORD-10004",
+      "customer_email": "dave@example.com",
+      "status": "cancelled",
+      "placed_at": "2026-10-15T08:00:00Z",
+      "updated_at": "2026-10-16T09:00:00Z",
+      "total": "$199.99",
+      "items": [
+        {"product_id": "PROD-506", "name": "Smartwatch", "quantity": 1, "price": "$199.99"}
+      ]
+    },
+    {
+      "order_id": "ORD-10005",
+      "customer_email": "eve@example.com",
+      "status": "pending",
+      "placed_at": "2026-10-23T17:45:00Z",
+      "updated_at": "2026-10-23T17:45:00Z",
+      "total": "$89.50",
+      "items": [
+        {"product_id": "PROD-501", "name": "Wireless Headphones", "quantity": 1, "price": "$79.99"},
+        {"product_id": "PROD-507", "name": "Screen Protector", "quantity": 1, "price": "$9.51"}
+      ]
+    }
+  ],
+  "shipments": [
+    {
+      "order_id": "ORD-10001",
+      "tracking_number": "TRK-88001122",
+      "carrier": "FedEx",
+      "status": "delivered",
+      "estimated_delivery": "2026-10-14",
+      "shipped_at": "2026-10-11T08:00:00Z",
+      "delivered_at": "2026-10-14T15:20:00Z"
+    },
+    {
+      "order_id": "ORD-10002",
+      "tracking_number": "TRK-99002233",
+      "carrier": "UPS",
+      "status": "in_transit",
+      "estimated_delivery": "2026-10-25",
+      "shipped_at": "2026-10-20T10:00:00Z",
+      "delivered_at": null
+    }
+  ],
+  "products": [
+    {
+      "product_id": "PROD-501",
+      "name": "Wireless Headphones",
+      "category": "Audio",
+      "price": "$79.99",
+      "in_stock": true,
+      "description": "Over-ear wireless headphones with active noise cancellation and 30-hour battery life.",
+      "warranty": "1 year manufacturer warranty"
+    },
+    {
+      "product_id": "PROD-502",
+      "name": "USB-C Charging Cable",
+      "category": "Accessories",
+      "price": "$12.50",
+      "in_stock": true,
+      "description": "Braided 6-foot USB-C to USB-C fast charging cable.",
+      "warranty": "6 months manufacturer warranty"
+    },
+    {
+      "product_id": "PROD-503",
+      "name": "Laptop Stand",
+      "category": "Accessories",
+      "price": "$49.00",
+      "in_stock": true,
+      "description": "Adjustable aluminum laptop stand compatible with 10-17 inch laptops.",
+      "warranty": "1 year manufacturer warranty"
+    },
+    {
+      "product_id": "PROD-504",
+      "name": "Mechanical Keyboard",
+      "category": "Peripherals",
+      "price": "$300.00",
+      "in_stock": false,
+      "description": "Full-size mechanical keyboard with Cherry MX Blue switches and RGB backlighting.",
+      "warranty": "2 year manufacturer warranty"
+    },
+    {
+      "product_id": "PROD-505",
+      "name": "Bluetooth Speaker",
+      "category": "Audio",
+      "price": "$59.99",
+      "in_stock": true,
+      "description": "Portable waterproof Bluetooth speaker with 12-hour battery life.",
+      "warranty": "1 year manufacturer warranty"
+    },
+    {
+      "product_id": "PROD-506",
+      "name": "Smartwatch",
+      "category": "Wearables",
+      "price": "$199.99",
+      "in_stock": true,
+      "description": "Fitness-focused smartwatch with heart rate monitor, GPS, and 5-day battery life.",
+      "warranty": "1 year manufacturer warranty"
+    },
+    {
+      "product_id": "PROD-507",
+      "name": "Screen Protector",
+      "category": "Accessories",
+      "price": "$9.51",
+      "in_stock": true,
+      "description": "Tempered glass screen protector with anti-fingerprint coating.",
+      "warranty": "No warranty"
+    }
+  ],
+  "policies": {
+    "return_policy": {
+      "title": "Return Policy",
+      "window_days": 30,
+      "conditions": [
+        "Items must be unused and in original packaging.",
+        "Return request must be submitted within 30 days of delivery.",
+        "Electronics must include all original accessories.",
+        "Sale items and gift cards are final sale and cannot be returned."
+      ],
+      "process": "Contact customer support to receive a return shipping label. Ship the item back within 7 days of receiving the label."
+    },
+    "refund_policy": {
+      "title": "Refund Policy",
+      "processing_days": "5-10 business days",
+      "conditions": [
+        "Refunds are issued to the original payment method after the returned item is inspected.",
+        "Shipping costs are non-refundable unless the return is due to a defective or incorrect item.",
+        "Partial refunds may be issued for items that show signs of use."
+      ],
+      "process": "Once the returned item passes inspection, the refund is processed within 5-10 business days."
+    },
+    "cancellation_policy": {
+      "title": "Cancellation Policy",
+      "conditions": [
+        "Orders can be cancelled before they enter the 'shipped' status.",
+        "Orders that have already shipped cannot be cancelled and must follow the return process.",
+        "Refunds for cancelled orders are processed within 3-5 business days."
+      ]
+    },
+    "shipping_policy": {
+      "title": "Shipping Policy",
+      "standard_delivery": "5-7 business days",
+      "express_delivery": "2-3 business days",
+      "free_shipping_threshold": "$50.00",
+      "conditions": [
+        "Free standard shipping on orders over $50.",
+        "Express shipping is available for an additional fee.",
+        "International shipping is not currently available.",
+        "Delivery times are estimates and may vary."
+      ]
+    }
+  }
+}

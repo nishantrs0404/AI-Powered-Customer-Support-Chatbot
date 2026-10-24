@@ -30,6 +30,7 @@ from app.schemas.nlp import (
     MessageAnalysisResponse,
     NLPRequest,
 )
+from app.services.context_builder import build_context, format_context_for_prompt
 from app.services.faq_search import search_faqs as faq_service_search
 from app.services.gemini import generate_context_aware_reply, generate_reply
 from app.services.prompts import FAQ_RELEVANCE_THRESHOLD, HISTORY_LIMIT, SYSTEM_PROMPT
@@ -296,6 +297,13 @@ async def create_context_aware_reply(
         ) from exc
 
     # ------------------------------------------------------------------
+    # NLP Intent Classification & Entity Extraction
+    # (Run BEFORE FAQ/Gemini so context can be built for the Gemini path.)
+    # ------------------------------------------------------------------
+    intent_result = classify_intent(request.message)
+    extracted_entities = extract_entities(request.message)
+
+    # ------------------------------------------------------------------
     # FAQ-first routing
     # Search the FAQ dataset for a sufficiently relevant answer.
     # search_faqs() returns results sorted by descending score and already
@@ -317,6 +325,27 @@ async def create_context_aware_reply(
         answer_source: str = "faq"
     else:
         # ------------------------------------------------------------------
+        # Business context retrieval (Day 19-20)
+        # Build grounded context from intent + extracted entities.
+        # ------------------------------------------------------------------
+        try:
+            business_context = build_context(
+                request.message,
+                intent_result.intent,
+                extracted_entities.to_dict(),
+            )
+            context_text = format_context_for_prompt(business_context)
+        except Exception:
+            # If context retrieval fails, continue without it.
+            context_text = ""
+
+        # Build the augmented system prompt with business context.
+        if context_text:
+            augmented_prompt = SYSTEM_PROMPT + "\n\n" + context_text
+        else:
+            augmented_prompt = SYSTEM_PROMPT
+
+        # ------------------------------------------------------------------
         # Gemini fallback
         # Retrieve the N most recent messages *excluding* the one just saved
         # so it is not duplicated when we pass history to Gemini.
@@ -337,13 +366,13 @@ async def create_context_aware_reply(
             for row in reversed(recent_rows)
         ]
 
-        # Call Gemini with the system prompt, history, and current message.
+        # Call Gemini with the augmented system prompt, history, and current message.
         try:
             faq_answer = await asyncio.to_thread(
                 generate_context_aware_reply,
                 request.message,
                 history,
-                SYSTEM_PROMPT,
+                augmented_prompt,
             )
         except Exception as exc:
             if isinstance(exc, HTTPException):
@@ -379,12 +408,6 @@ async def create_context_aware_reply(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while saving response.",
         ) from exc
-
-    # ------------------------------------------------------------------
-    # NLP Intent Classification & Entity Extraction
-    # ------------------------------------------------------------------
-    intent_result = classify_intent(request.message)
-    extracted_entities = extract_entities(request.message)
 
     # Build and return the extended reply response.
     return ReplyResponse(
