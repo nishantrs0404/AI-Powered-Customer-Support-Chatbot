@@ -31,6 +31,12 @@ from app.schemas.nlp import (
     NLPRequest,
 )
 from app.services.context_builder import build_context, format_context_for_prompt
+from app.services.conversation_state import (
+    build_clarification_reply,
+    load_state,
+    resolve_entities,
+    update_state,
+)
 from app.services.faq_search import search_faqs as faq_service_search
 from app.services.gemini import generate_context_aware_reply, generate_reply
 from app.services.prompts import FAQ_RELEVANCE_THRESHOLD, HISTORY_LIMIT, SYSTEM_PROMPT
@@ -304,6 +310,58 @@ async def create_context_aware_reply(
     extracted_entities = extract_entities(request.message)
 
     # ------------------------------------------------------------------
+    # Day 21: Multi-turn conversational state tracking
+    # Load prior state and resolve entities using slot memory.
+    # ------------------------------------------------------------------
+    prior_state = load_state(conversation.id, db)
+    resolved_entity_dict, is_ambiguous = resolve_entities(
+        extracted_entities.to_dict(),
+        intent_result.intent,
+        prior_state,
+    )
+
+    # When the customer provided conflicting identifiers, ask for
+    # clarification immediately — skip FAQ/Gemini for this turn.
+    if is_ambiguous:
+        clarification_text = build_clarification_reply()
+        answer_source = "gemini"  # Treat as a generated response.
+
+        try:
+            # Update state to record the ambiguous turn.
+            update_state(
+                conversation.id,
+                intent_result.intent,
+                resolved_entity_dict,
+                is_ambiguous,
+                db,
+            )
+            assistant_message = models.Message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=clarification_text,
+            )
+            db.add(assistant_message)
+            db.commit()
+            db.refresh(assistant_message)
+        except Exception as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database error while saving clarification response.",
+            ) from exc
+
+        return ReplyResponse(
+            id=assistant_message.id,
+            conversation_id=assistant_message.conversation_id,
+            role=assistant_message.role,
+            content=assistant_message.content,
+            created_at=assistant_message.created_at,
+            answer_source=answer_source,
+            intent=intent_result.intent,
+            entities=resolved_entity_dict,
+        )
+
+    # ------------------------------------------------------------------
     # FAQ-first routing
     # Search the FAQ dataset for a sufficiently relevant answer.
     # search_faqs() returns results sorted by descending score and already
@@ -326,13 +384,13 @@ async def create_context_aware_reply(
     else:
         # ------------------------------------------------------------------
         # Business context retrieval (Day 19-20)
-        # Build grounded context from intent + extracted entities.
+        # Build grounded context from intent + *resolved* entities (Day 21).
         # ------------------------------------------------------------------
         try:
             business_context = build_context(
                 request.message,
                 intent_result.intent,
-                extracted_entities.to_dict(),
+                resolved_entity_dict,
             )
             context_text = format_context_for_prompt(business_context)
         except Exception:
@@ -392,6 +450,21 @@ async def create_context_aware_reply(
 
         answer_source = "gemini"
 
+    # ------------------------------------------------------------------
+    # Day 21: Persist updated conversational state after each successful turn.
+    # ------------------------------------------------------------------
+    try:
+        update_state(
+            conversation.id,
+            intent_result.intent,
+            resolved_entity_dict,
+            is_ambiguous,
+            db,
+        )
+    except Exception:
+        # State tracking must never break the primary reply flow.
+        pass
+
     # Persist the assistant response.
     try:
         assistant_message = models.Message(
@@ -418,7 +491,7 @@ async def create_context_aware_reply(
         created_at=assistant_message.created_at,
         answer_source=answer_source,
         intent=intent_result.intent,
-        entities=extracted_entities.to_dict(),
+        entities=resolved_entity_dict,
     )
 
 

@@ -876,3 +876,8 @@ The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` w
 - Tests: 176 passed, 0 failed (114 baseline + 62 new tests in `test_retrieval.py`).
 - Verification: Verified order/shipment/product/policy lookups, missing/unknown ID handling, intent-aware routing, grounded prompt assembly, and reply pipeline integration via automated tests and FastAPI TestClient.
 
+### Day 21
+- Implemented: multi-turn conversational state tracking and slot filling. Added `ConversationState` SQLite model (persistent per session), `conversation_state.py` service with slot carry-forward, topic-change clearing, and ambiguity detection. Integrated into `POST /api/v1/conversations/{session_id}/reply`: state loads before NLP, resolved entities replace raw entities for retrieval and Gemini context, state is upserted after each turn. Ambiguous multi-ID messages return an immediate clarification reply.
+- Tests: 208 passed, 0 failed (176 baseline + 32 new tests in `test_conversation_state.py`).
+- Verification: Cross-turn order ID memory; follow-up shipping resolution using prior state; identifier supplied in later message; new order overwrites prior slot; topic change (greeting, account, etc.) clears slots; ambiguous dual-order message triggers clarification; strict session isolation; SQLite persistence across simulated restarts; graceful handling of missing and unknown order IDs; FAQ-first routing unchanged; backward-compatible `ReplyResponse` shape.
+
