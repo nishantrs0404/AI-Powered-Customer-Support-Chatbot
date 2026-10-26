@@ -40,6 +40,11 @@ from app.services.conversation_state import (
 from app.services.faq_search import search_faqs as faq_service_search
 from app.services.gemini import generate_context_aware_reply, generate_reply
 from app.services.prompts import FAQ_RELEVANCE_THRESHOLD, HISTORY_LIMIT, SYSTEM_PROMPT
+from app.services.response_formatter import build_tone_reminder, get_format_guidance
+from app.services.response_validator import (
+    SAFE_FALLBACK_GEMINI_ERROR,
+    validate_response,
+)
 
 
 # Gemini request and response schemas
@@ -386,6 +391,7 @@ async def create_context_aware_reply(
         # Business context retrieval (Day 19-20)
         # Build grounded context from intent + *resolved* entities (Day 21).
         # ------------------------------------------------------------------
+        business_context: dict = {}
         try:
             business_context = build_context(
                 request.message,
@@ -397,11 +403,18 @@ async def create_context_aware_reply(
             # If context retrieval fails, continue without it.
             context_text = ""
 
-        # Build the augmented system prompt with business context.
+        # ------------------------------------------------------------------
+        # Day 22: Augmented system prompt with format guidance + tone reminder.
+        # ------------------------------------------------------------------
+        format_guidance = get_format_guidance(intent_result.intent, business_context)
+        tone_reminder = build_tone_reminder()
+        prompt_parts = [SYSTEM_PROMPT]
         if context_text:
-            augmented_prompt = SYSTEM_PROMPT + "\n\n" + context_text
-        else:
-            augmented_prompt = SYSTEM_PROMPT
+            prompt_parts.append(context_text)
+        if format_guidance:
+            prompt_parts.append(format_guidance)
+        prompt_parts.append(tone_reminder)
+        augmented_prompt = "\n\n".join(prompt_parts)
 
         # ------------------------------------------------------------------
         # Gemini fallback
@@ -447,6 +460,19 @@ async def create_context_aware_reply(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Gemini could not generate a response. Please try again.",
             ) from exc
+
+        # ------------------------------------------------------------------
+        # Day 23: Validate the Gemini response before using it.
+        # If validation fails, substitute the safe fallback.
+        # ------------------------------------------------------------------
+        validation = validate_response(
+            faq_answer,
+            intent_result.intent,
+            business_context,
+            source="gemini",
+        )
+        if not validation.valid:
+            faq_answer = validation.safe_fallback or SAFE_FALLBACK_GEMINI_ERROR
 
         answer_source = "gemini"
 

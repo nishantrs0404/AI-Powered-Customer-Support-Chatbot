@@ -881,3 +881,13 @@ The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` w
 - Tests: 208 passed, 0 failed (176 baseline + 32 new tests in `test_conversation_state.py`).
 - Verification: Cross-turn order ID memory; follow-up shipping resolution using prior state; identifier supplied in later message; new order overwrites prior slot; topic change (greeting, account, etc.) clears slots; ambiguous dual-order message triggers clarification; strict session isolation; SQLite persistence across simulated restarts; graceful handling of missing and unknown order IDs; FAQ-first routing unchanged; backward-compatible `ReplyResponse` shape.
 
+### Day 22–23
+- Implemented: response quality scoring, tone control, intent-aware response formatting, and pre-delivery reliability validation.
+  - Added `response_formatter.py` with intent-aware formatting guidance (`get_format_guidance`, `build_tone_reminder`) structuring candidate outputs per business domain (orders, shipping, returns, refunds, cancellations, products, policies) without hardcoded dummy data.
+  - Enhanced `prompts.py` with explicit tone control rules (empathy for complaints, direct factual answers, numbered multi-step lists, corporate filler elimination, apology cap, clear escalation).
+  - Added `response_quality.py` with deterministic multi-dimensional response quality scoring across 6 weighted dimensions (`non_empty`, `length_ok`, `intent_relevant`, `grounded`, `no_filler`, `no_unverified_op`) with configurable threshold and critical grounding failure detection.
+  - Added `response_validator.py` with candidate response validation (`validate_response`, `build_safe_fallback`) enforcing non-emptiness, quality thresholds, entity consistency (preventing hallucinated IDs), business-claim verification (blocking false operational confirmations like unverified cancellations or refunds), and generating safe deterministic fallbacks.
+  - Integrated into `POST /api/v1/conversations/{session_id}/reply`: augmented system prompt with dynamic formatting and tone guidance; candidate responses validated prior to persistence and delivery; safe fallbacks applied on validation failures while preserving FAQ-first routing, multi-turn slot memory, and API backward compatibility.
+- Tests: 271 passed, 0 failed (208 baseline + 63 new tests across `test_day22_23.py` plus regression updates in `test_context_reply.py` and `test_faq_first_reply.py`).
+- Verification: Verified intent-based formatting guidance, tone enforcement, 6-dimension quality scoring, empty/malformed response rejection, hallucinated identifier detection, ungrounded operational claim suppression, safe fallback generation, reply pipeline integration, and backward-compatible API responses via automated pytest suite.
+

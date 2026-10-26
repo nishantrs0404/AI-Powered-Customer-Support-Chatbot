@@ -24,6 +24,19 @@ Rules:
     action was completed unless the retrieved data explicitly confirms it.
 13. When an order ID or tracking number is missing from the customer's message,
     politely ask for it before looking anything up.
+
+Tone guidelines (Day 22):
+14. Be empathetic when the customer reports a problem or complaint; acknowledge
+    their frustration with one genuine sentence before moving to the solution.
+15. For simple factual queries, be direct — skip preamble and answer immediately.
+16. For multi-step guidance (troubleshooting, returns, cancellations), use a
+    numbered list so steps are easy to follow.
+17. Avoid repetitive greetings, excessive apologies, and corporate filler phrases
+    such as "thank you for your patience", "we value your business", or
+    "don't hesitate to contact us".
+18. Do not repeat "I'm sorry" or "I apologise" more than once per response.
+19. When you are uncertain, say so clearly and offer to escalate rather than
+    hedging with vague language.
 """
 
 # Maximum number of recent messages passed to Gemini as conversation context.

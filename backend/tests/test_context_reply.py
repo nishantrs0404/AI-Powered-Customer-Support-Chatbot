@@ -74,7 +74,9 @@ def test_system_prompt_is_passed_to_gemini(client, monkeypatch):
     response = _reply(client, session_id, "Hello")
 
     assert response.status_code == 201
-    assert captured["system_prompt"] == SYSTEM_PROMPT
+    # The augmented prompt now includes format guidance and tone reminder appended
+    # after SYSTEM_PROMPT, so we verify the base system prompt is contained in it.
+    assert SYSTEM_PROMPT.strip() in captured["system_prompt"]
 
 
 # ---------------------------------------------------------------------------
