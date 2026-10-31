@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import ChatHeader from "./components/ChatHeader";
 import MessageList from "./components/MessageList";
@@ -7,80 +7,33 @@ import LoadingIndicator from "./components/LoadingIndicator";
 import FAQSuggestions from "./components/FAQSuggestions";
 import ErrorMessage from "./components/ErrorMessage";
 
+import { createConversation, sendMessage } from "./services/api";
+
 import "./styles/global.css";
 
-const initialMessages = [
-  {
-    id: 1,
-    sender: "bot",
-    message: "Hello! How can I help you today?",
-    timestamp: new Date()
-  },
-  {
-    id: 2,
-    sender: "user",
-    message: "Where is my order?",
-    timestamp: new Date()
-  },
-  {
-    id: 3,
-    sender: "bot",
-    message: "Sure! Please provide your order ID.",
-    timestamp: new Date()
-  }
-];
-
-function generateMockResponse(message) {
-  const text = message.toLowerCase();
-
-  if (
-    text.includes("order") ||
-    text.includes("track") ||
-    text.includes("shipping")
-  ) {
-    return "I can help you check your order status. Please provide your order ID.";
-  }
-
-  if (
-    text.includes("refund") ||
-    text.includes("money back")
-  ) {
-    return "I can help with your refund request. Please provide your order ID so we can check the refund status.";
-  }
-
-  if (
-    text.includes("return") ||
-    text.includes("exchange")
-  ) {
-    return "Sure! I can help you with a return or exchange. Please provide your order ID.";
-  }
-
-  if (
-    text.includes("payment") ||
-    text.includes("pay")
-  ) {
-    return "We support multiple payment methods. Please let me know if you are having a problem with a specific payment.";
-  }
-
-  if (
-    text.includes("hello") ||
-    text.includes("hi") ||
-    text.includes("hey")
-  ) {
-    return "Hello! I'm happy to help. What can I assist you with today?";
-  }
-
-  return "Thanks for contacting us. Could you provide a little more information so I can help you better?";
-}
-
 function App() {
-  const [messages, setMessages] = useState(initialMessages);
-
+  const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
   const [error, setError] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
 
-  const handleSendMessage = (message) => {
+  // Create a conversation session when the app mounts.
+  const initConversation = useCallback(async () => {
+    try {
+      const conversation = await createConversation();
+      setSessionId(conversation.session_id);
+    } catch {
+      // Backend may be unreachable — the user can still type and
+      // the error will surface when they send a message.
+      setSessionId(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    initConversation();
+  }, [initConversation]);
+
+  const handleSendMessage = async (message) => {
     if (isLoading) {
       return;
     }
@@ -91,45 +44,66 @@ function App() {
       id: Date.now(),
       sender: "user",
       message: message,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages((previousMessages) => [
-      ...previousMessages,
-      userMessage
-    ]);
-
+    setMessages((previousMessages) => [...previousMessages, userMessage]);
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // If we don't have a session yet (backend was down on mount), try now.
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        const conversation = await createConversation();
+        currentSessionId = conversation.session_id;
+        setSessionId(currentSessionId);
+      }
+
+      const reply = await sendMessage(currentSessionId, message);
+
       const botMessage = {
-        id: Date.now() + 1,
+        id: reply.id || Date.now() + 1,
         sender: "bot",
-        message: generateMockResponse(message),
-        timestamp: new Date()
+        message: reply.content,
+        timestamp: reply.created_at ? new Date(reply.created_at) : new Date(),
       };
 
-      setMessages((previousMessages) => [
-        ...previousMessages,
-        botMessage
-      ]);
-
+      setMessages((previousMessages) => [...previousMessages, botMessage]);
+    } catch (err) {
+      setError(
+        err.message || "Could not reach the server. Please try again."
+      );
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSuggestionSelect = (suggestion) => {
     handleSendMessage(suggestion);
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     setMessages([]);
     setError(null);
     setIsLoading(false);
+
+    // Start a fresh conversation so history is clean.
+    await initConversation();
   };
 
   const handleRetry = () => {
     setError(null);
+
+    // Retry the last user message if one exists.
+    const lastUserMessage = [...messages]
+      .reverse()
+      .find((m) => m.sender === "user");
+
+    if (lastUserMessage) {
+      // Remove the last user message so handleSendMessage can re-add it.
+      setMessages((prev) => prev.filter((m) => m.id !== lastUserMessage.id));
+      handleSendMessage(lastUserMessage.message);
+    }
   };
 
   return (

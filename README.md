@@ -23,8 +23,7 @@ Frontend:
 - React.js
 - Vite
 - Component-based UI
-
-Backend integration will be implemented in later development phases.
+- REST API service integration with FastAPI backend
 
 ### Part 2 — Chat UI Main Layout & Responsive Design
 
@@ -891,3 +890,15 @@ The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` w
 - Tests: 271 passed, 0 failed (208 baseline + 63 new tests across `test_day22_23.py` plus regression updates in `test_context_reply.py` and `test_faq_first_reply.py`).
 - Verification: Verified intent-based formatting guidance, tone enforcement, 6-dimension quality scoring, empty/malformed response rejection, hallucinated identifier detection, ungrounded operational claim suppression, safe fallback generation, reply pipeline integration, and backward-compatible API responses via automated pytest suite.
 
+### Day 24 — Frontend ↔ Backend Integration
+- Implemented: full integration between the React/Vite frontend and FastAPI backend.
+  - Added configurable API service layer (`frontend/src/services/api.js`) using `VITE_API_BASE_URL` with fallback to `http://localhost:8000`.
+  - Configured CORS middleware in `backend/app/main.py` allowing cross-origin requests from Vite development servers (`http://localhost:5173`, `http://127.0.0.1:5173`).
+  - Connected existing UI components (`ChatHeader`, `MessageList`, `MessageBubble`, `ChatInput`, `LoadingIndicator`, `ErrorMessage`, `FAQSuggestions`) in `frontend/src/App.jsx`.
+  - Connected conversation lifecycle: initializes session via `POST /api/v1/conversations`, sends messages via `POST /api/v1/conversations/{session_id}/reply`, and displays real chatbot responses in the chat interface.
+  - Implemented request and loading state management: active loading indicator during backend requests, input and send button disabled to prevent duplicate submissions, automatic clearing of loading state on success or failure.
+  - Added graceful error handling: network or API failures surface clear error messages without crashing the UI, with retry functionality to resend the failed message.
+- Tests & Verification:
+  - Backend test suite: 271 passed, 0 failed (`python -m pytest tests/ -q`).
+  - Frontend production build: verified clean build with 0 errors (`npm run build`).
+  - End-to-end integration flow verified: CORS preflight, conversation creation, message transmission, backend processing (FAQ-first and Gemini fallback paths), and UI response rendering.
