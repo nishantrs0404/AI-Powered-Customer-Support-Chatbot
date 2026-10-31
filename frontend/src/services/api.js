@@ -49,7 +49,29 @@ export async function sendMessage(sessionId, message) {
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
     const detail = errorData?.detail || `Server error (${response.status})`;
-    throw new Error(detail);
+    const error = new Error(detail);
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
+/**
+ * Retrieve conversation messages for a session in chronological order.
+ * Returns array of { id, conversation_id, role, content, created_at }.
+ */
+export async function getConversationMessages(sessionId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/conversations/${sessionId}/messages`
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const detail = errorData?.detail || `Server error (${response.status})`;
+    const error = new Error(detail);
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();
@@ -67,4 +89,3 @@ export async function checkHealth() {
     return false;
   }
 }
-

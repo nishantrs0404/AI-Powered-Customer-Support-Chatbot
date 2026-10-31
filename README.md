@@ -902,3 +902,16 @@ The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` w
   - Backend test suite: 271 passed, 0 failed (`python -m pytest tests/ -q`).
   - Frontend production build: verified clean build with 0 errors (`npm run build`).
   - End-to-end integration flow verified: CORS preflight, conversation creation, message transmission, backend processing (FAQ-first and Gemini fallback paths), and UI response rendering.
+
+### Day 25 — Chat Experience & Session Handling
+- Implemented: improved chat flow, persistent session handling, and conversation history restoration.
+  - Added session persistence: maintained consistent `session_id` using browser `localStorage` to preserve conversation continuity across subsequent messages and turns.
+  - Added conversation history on reload: on mount/refresh, queries `GET /api/v1/conversations/{session_id}/messages` to restore existing messages in chronological order, with automatic fallback and stale session cleanup (404 handling).
+  - Added `getConversationMessages` in `frontend/src/services/api.js` to fetch session message history.
+  - Implemented clean new chat / reset flow: 'Clear' button resets displayed messages, removes old session ID, and initializes a fresh session to ensure old conversation context is never reused.
+  - Improved message flow reliability: added synchronous `isSendingRef` check and trimming to block rapid duplicate or empty/whitespace-only submissions, with guaranteed loading state cleanup on error or success.
+  - Verified natural auto-scrolling on user send, chatbot response, and history restoration via `MessageList`'s scroll anchor.
+- Tests & Verification:
+  - Backend test suite: 271 passed, 0 failed (`python -m pytest tests/ -q`).
+  - Frontend production build: verified clean build with 0 errors (`npm run build`).
+  - Verified 5 integration scenarios: session continuity across multi-turn messages, conversation history restoration on reload, clean context separation on new chat reset, graceful 404/422 error handling, and duplicate submit prevention.
