@@ -19,7 +19,12 @@ export async function createConversation() {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to create conversation");
+    const errorData = await response.json().catch(() => null);
+    const detail =
+      errorData?.detail || `Failed to create conversation (${response.status})`;
+    const error = new Error(detail);
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();

@@ -1,11 +1,12 @@
 """Pydantic schemas for NLP intent classification and entity extraction."""
 
-from typing import Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class NLPRequest(BaseModel):
     """Request payload for NLP processing."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     message: str = Field(min_length=1, max_length=2000, description="Customer message to analyze")
 

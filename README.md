@@ -1,7 +1,7 @@
 ## Current Development Status
 
-**Project Progress:** Completed through Day 27 (**27 / 30 planned development days completed**)  
-**Backend Test Suite:** 285 passed, 0 failed  
+**Project Progress:** Completed through Day 29 (**29 / 30 planned development days completed**)  
+**Backend Test Suite:** 307 passed, 0 failed  
 **Frontend Production Build:** Successful (0 errors)
 
 ### Part 1 — UI Foundation
@@ -966,3 +966,40 @@ The complete execution flow of `POST /api/v1/conversations/{session_id}/reply` w
   - Backend test suite: **285 passed, 0 failed** (`python -m pytest tests/ -q`).
   - Frontend production build: **successful with 0 errors** (`npm run build`).
   - Project progress: **27 / 30 planned development days completed**.
+
+
+### Day 28 & Day 29 — Security, Performance, Reliability & Final Regression Validation
+
+- **Objective:** Comprehensive security hardening, input validation auditing, database and pipeline performance verification, end-to-end user scenario validation, and complete regression testing across the entire chatbot application.
+- **Implemented:**
+  - **API Input Validation & Boundary Hardening:**
+    - Standardized whitespace stripping across all Pydantic schemas (`MessageRequest`, `FAQSearchRequest`, `NLPRequest`, `AIReplyRequest`) using `ConfigDict(str_strip_whitespace=True)` to uniformly reject empty or whitespace-only inputs with `422 Unprocessable Entity`.
+    - Added dedicated session ID validation (`_validate_session_id`) across message persistence, history retrieval, and context-aware reply endpoints, rejecting malformed, whitespace, and oversized IDs (>100 characters) with `404 Not Found` before hitting the database.
+    - Enforced boundary limits on query length and FAQ search limits (`1 <= limit <= 10`).
+  - **Error Handling & Safe Responses:**
+    - Wrapped message history retrieval, conversation creation, and FAQ/NLP endpoints in defensive error-handling blocks, ensuring internal exceptions are never exposed to clients and returning standard HTTP status codes (`500 Internal Server Error`, `502 Bad Gateway`, `404 Not Found`, `422 Unprocessable Entity`).
+    - Guarded conversation state loading against unexpected storage issues, ensuring conversational flow continues gracefully even under partial state failures.
+    - Verified that upstream Gemini failures return normalized HTTP 502 Bad Gateway responses without leaking stack traces or internal configuration.
+  - **Security Review:**
+    - Confirmed API keys and secrets are strictly retrieved from environment variables (`.env`) and never hardcoded in repository files.
+    - Verified `.gitignore` prevents exposure of `.env`, `.env.*`, and database files.
+    - Audited CORS configuration, ensuring allowed origins are restricted to configured client applications (`http://localhost:5173`, `http://127.0.0.1:5173`) with explicit HTTP method constraints (`GET`, `POST`).
+    - Verified all SQL queries utilize parameterized SQLAlchemy ORM statements, eliminating SQL injection vulnerabilities.
+  - **Performance & Database Efficiency:**
+    - Confirmed indexed lookup on `Conversation.session_id` and foreign key relationships on `Message.conversation_id` and `ConversationState.conversation_id`.
+    - Ensured FAQ hits bypass Gemini API calls and history queries entirely, saving unnecessary database reads and LLM token usage.
+    - Verified `HISTORY_LIMIT = 10` strictly bounds context retrieval and token payload to the 10 most recent messages, ordered chronologically.
+    - Verified atomic database commits combining assistant message persistence and state updates into a single transaction.
+  - **Frontend Communication & Reliability:**
+    - Updated `createConversation` in `frontend/src/services/api.js` to parse structured server error details and attach HTTP status codes.
+    - Re-verified synchronous request deduplication via `isSendingRef` and guaranteed loading indicator cleanup in `finally` blocks.
+  - **End-to-End Scenario Testing:**
+    - *Scenario 1 (FAQ Response):* Verified that FAQ matches return verified answers directly with `answer_source="faq"` while completely bypassing Gemini.
+    - *Scenario 2 (Gemini Fallback):* Verified that unmatched queries fall back to Gemini with grounded business facts and persist correctly.
+    - *Scenario 3 (Multi-Turn Conversation):* Verified chronological message ordering, context carry-forward, history limit cap (10 messages), and strict session isolation.
+    - *Scenario 4 (Error & Recovery):* Verified that invalid inputs and transient API failures do not corrupt conversation state or database records, allowing users to continue seamlessly.
+- **Tests & Verification:**
+  - Added dedicated test suite in `backend/tests/test_day28_day29_validation.py` (22 new comprehensive tests).
+  - Total backend test suite: **307 passed, 0 failed** (`.venv\Scripts\pytest.exe backend\tests -q`).
+  - Frontend production build: **Successful with 0 errors** (`npm run build`).
+  - Project progress: **29 / 30 planned development days completed**.
