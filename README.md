@@ -85,41 +85,41 @@ The system follows a clean modular pipeline where every incoming message progres
 
 ```mermaid
 flowchart TD
-    User([Customer / Web Browser]) -->|User Message| Frontend[React 19 + Vite Frontend]
-    Frontend -->|POST /api/v1/conversations/:id/reply| Backend[FastAPI Backend]
+    User(["Customer / Web Browser"]) -->|"User Message"| Frontend["React 19 + Vite Frontend"]
+    Frontend -->|"POST /api/v1/conversations/:id/reply"| Backend["FastAPI Backend"]
 
-    subgraph Backend Pipeline
-        Backend --> InputVal{Input & Session<br/>Validation}
-        InputVal -->|Invalid / Whitespace| Err422[HTTP 422 / 404]
-        InputVal -->|Valid| SaveUserMsg[(Save User Message<br/>to SQLite)]
+    subgraph BackendPipeline ["Backend Pipeline"]
+        Backend --> InputVal{"Input & Session Validation"}
+        InputVal -->|"Invalid or Whitespace"| Err422["HTTP 422 / 404 Error"]
+        InputVal -->|"Valid Input"| SaveUserMsg[("Save User Message to SQLite")]
 
-        SaveUserMsg --> NLP[NLP Preprocessing &<br/>Entity Extraction]
-        NLP --> SlotMemory[Load & Resolve State<br/>Slot Memory Carry-Forward]
+        SaveUserMsg --> NLP["NLP Preprocessing & Entity Extraction"]
+        NLP --> SlotMemory["Load & Resolve Slot Memory State"]
         
-        SlotMemory --> AmbiguousCheck{Multiple Conflicting<br/>Identifiers?}
-        AmbiguousCheck -->|Yes| Clarification[Generate Clarification Reply]
-        AmbiguousCheck -->|No| FAQSearch[FAQ Knowledge Base Search<br/>Jaccard + Keyword Coverage]
+        SlotMemory --> AmbiguousCheck{"Multiple Conflicting Identifiers?"}
+        AmbiguousCheck -->|"Yes"| Clarification["Generate Clarification Reply"]
+        AmbiguousCheck -->|"No"| FAQSearch["FAQ Search: Jaccard & Keyword Coverage"]
 
-        FAQSearch --> ScoreCheck{Relevance Score<br/>>= 0.35?}
-        ScoreCheck -->|Yes (FAQ Hit)| FAQAnswer[Verified FAQ Response<br/>answer_source = 'faq']
+        FAQSearch --> ScoreCheck{"FAQ Relevance Score >= 0.35?"}
+        ScoreCheck -->|"Yes - FAQ Match"| FAQAnswer["Verified FAQ Answer (answer_source: faq)"]
         
-        ScoreCheck -->|No (Fallback)| BizRetrieval[Business Data Lookup<br/>Orders, Shipments, Policies]
-        BizRetrieval --> AssemblePrompt[Augment System Prompt<br/>+ Context + Format Guidance]
-        AssemblePrompt --> FetchHistory[(Fetch History Slice<br/>Up to 10 Messages)]
-        FetchHistory --> CallGemini[Call Google Gemini API<br/>Model: gemini-3.5-flash-lite]
-        CallGemini --> QualityValidator{Response Quality<br/>& Grounding Check}
-        QualityValidator -->|Valid| GeminiAnswer[Grounded AI Response<br/>answer_source = 'gemini']
-        QualityValidator -->|Invalid / Hallucinated| SafeFallback[Safe Deterministic Fallback]
+        ScoreCheck -->|"No - Fallback"| BizRetrieval["Business Data Retrieval (Orders, Policies)"]
+        BizRetrieval --> AssemblePrompt["Assemble System Prompt & Context"]
+        AssemblePrompt --> FetchHistory[("Fetch History Slice: Up to 10 Messages")]
+        FetchHistory --> CallGemini["Call Google Gemini API (gemini-3.5-flash-lite)"]
+        CallGemini --> QualityValidator{"Response Quality & Grounding Check"}
+        QualityValidator -->|"Valid"| GeminiAnswer["Grounded AI Response (answer_source: gemini)"]
+        QualityValidator -->|"Invalid"| SafeFallback["Safe Fallback Response"]
 
-        FAQAnswer --> CommitDB[(Atomic DB Commit<br/>Assistant Message + State)]
+        FAQAnswer --> CommitDB[("Atomic DB Commit: Message & State")]
         Clarification --> CommitDB
         GeminiAnswer --> CommitDB
         SafeFallback --> CommitDB
     end
 
-    CommitDB --> ReturnReply[Return ReplyResponse JSON]
+    CommitDB --> ReturnReply["Return ReplyResponse JSON"]
     ReturnReply --> Frontend
-    Frontend --> Display([Render Bot Bubble in UI])
+    Frontend --> Display(["Render Bot Bubble in Chat UI"])
 ```
 
 ---
